@@ -7,6 +7,7 @@ const { NODE_ENV } = require('./config')
 
 const app = express()
 const morganOption = NODE_ENV === 'production' ? 'tiny' : 'dev'
+const ArticlesService = require('./articles-service')
 
 app.use(morgan(morganOption))
 app.use(helmet())
@@ -14,8 +15,17 @@ app.use(cors())
 app.get('/', (req, res) => {
   res.send('Hello boilerplate')
 })
-
+app.get('/articles', getArticles)
 app.use(errorHandler)
+
+function getArticles(req, res, next) {
+  const knexI = req.app.get('db')
+  ArticlesService.getAllArticles(knexI)
+    .then(articles => {
+      res.json(articles)
+    })
+    .catch(next)
+}
 
 function errorHandler(error, req, res, next) {
   let response
