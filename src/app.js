@@ -15,15 +15,17 @@ app.get('/', (req, res) => {
   res.send('Hello boilerplate')
 })
 
-app.use(function errorHandler(error, req, res, next) {
+app.use(errorHandler)
+
+function errorHandler(error, req, res, next) {
   let response
   if (NODE_ENV === "production") {
-    response = { error: {message: "Server Error"} }
+    response = { error: { message: "Server Error" } }
   } else {
     console.log(error)
     response = { message: error.message, error }
   }
   res.status(500).json(response)
-})
+}
 
 module.exports = app
