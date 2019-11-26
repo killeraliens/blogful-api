@@ -16,7 +16,18 @@ app.get('/', (req, res) => {
   res.send('Hello boilerplate')
 })
 app.get('/articles', getArticles)
+app.get('/articles/:article_id', getArticle)
 app.use(errorHandler)
+
+function getArticle(req, res, next) {
+  const { article_id } = req.params
+  const knexI = req.app.get('db')
+  ArticlesService.getById(knexI, article_id)
+    .then(article => {
+      res.json(article)
+    })
+    .catch(next)
+}
 
 function getArticles(req, res, next) {
   const knexI = req.app.get('db')
