@@ -16,18 +16,28 @@ articlesRouter
 
 
 function postArticle(req, res, next) {
-  //const { title, style, content } = req.body
+  const { title, style, content } = req.body
+  const newArticle = { title, style, content }
   const knexI = req.app.get('db')
-  ArticlesService.insertArticle(knexI, { ...req.body })
-    .then(article => {
-      if (!article.title || !article.style || !article.content) {
-        return res.status(404).json({ error: { message: `Invalid data` } })
-      }
 
+  if (!title) {
+    return res.status(400).json({ error: { message: `Title required` } })
+  }
+
+  if (!style) {
+    return res.status(400).json({ error: { message: `Style required` } })
+  }
+
+  if (!content) {
+    return res.status(400).json({ error: { message: `Content required` } })
+  }
+
+  ArticlesService.insertArticle(knexI, newArticle)
+    .then(newArticle => {
       res
         .status(201)
-        .location(`/articles/${article.id}`)
-        .json(article)
+        .location(`/articles/${newArticle.id}`)
+        .json(newArticle)
     })
     .catch(next)
 }

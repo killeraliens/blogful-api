@@ -75,7 +75,7 @@ describe('Articles Endpoints', () => {
     })
 
     context('given that there are no articles', () => {
-      it('returns 400 and error', () => {
+      it('returns 404 and error', () => {
         const badId = 12345
         return supertest(app)
           .get(`/articles/${badId}`)
@@ -114,16 +114,38 @@ describe('Articles Endpoints', () => {
       })
 
       context('given the post body has errors', () => {
-        // it('responds with 404 and error with missing required fields', () => {
-        //   const missingTitleArticle = makeArticle.missingTitle()
-        //   return supertest(app)
-        //     .post('/articles')
-        //     .send(missingTitleArticle)
-        //     .expect(404)
-        //     .expect(res => {
-        //       expect(res.body).to.eql({error: {message: `Invalid data`}})
-        //     })
-        // })
+        it('responds with 400 and error with missing title field', () => {
+          const missingTitleArticle = makeArticle.missingTitle()
+          return supertest(app)
+            .post('/articles')
+            .send(missingTitleArticle)
+            .expect(400)
+            .expect(res => {
+              expect(res.body).to.eql({error: {message: `Title required`}})
+            })
+        })
+
+        it('responds with 400 and error with missing Content field', () => {
+          const missingContentArticle = makeArticle.missingContent()
+          return supertest(app)
+            .post('/articles')
+            .send(missingContentArticle)
+            .expect(400)
+            .expect(res => {
+              expect(res.body).to.eql({ error: { message: `Content required` } })
+            })
+        })
+
+        it('responds with 400 and error with missing Style field', () => {
+          const missingStyleArticle = makeArticle.missingStyle()
+          return supertest(app)
+            .post('/articles')
+            .send(missingStyleArticle)
+            .expect(400)
+            .expect(res => {
+              expect(res.body).to.eql({ error: { message: `Style required` } })
+            })
+        })
       })
     })
 

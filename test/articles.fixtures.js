@@ -37,6 +37,20 @@ const makeArticle = {
       style: 'Listicle',
       content: 'Test new article content...'
     }
+  },
+
+  missingContent() {
+    return {
+      style: 'listicle',
+      title: 'some title'
+    }
+  },
+
+  missingStyle() {
+    return {
+      title: 'some title',
+      content: 'awesome content'
+    }
   }
 }
 
