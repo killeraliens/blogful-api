@@ -46,20 +46,22 @@ describe('Articles Endpoints', () => {
   })
 
   describe('GET /articles/:article_id', () => {
-    const testArticles = makeArticlesArray()
+    context('given that there are blogful_articles', () => {
+      const testArticles = makeArticlesArray()
 
-    beforeEach('insert articles into blogful_articles table', () => {
-      return db
-        .into('blogful_articles')
-        .insert(testArticles)
-    })
+      beforeEach('insert articles into blogful_articles table', () => {
+        return db
+          .into('blogful_articles')
+          .insert(testArticles)
+      })
 
-    it(' returns 200 and correct article if exists', () => {
-      const articleId = 2
-      const expectedArticle = testArticles[articleId - 1]
-      return supertest(app)
-        .get(`/articles/${articleId}`)
-        .expect(200, expectedArticle)
+      it(' returns 200 and correct article if exists', () => {
+        const articleId = 2
+        const expectedArticle = testArticles[articleId - 1]
+        return supertest(app)
+          .get(`/articles/${articleId}`)
+          .expect(200, expectedArticle)
+      })
     })
   })
 
