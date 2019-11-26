@@ -7,39 +7,20 @@ const { NODE_ENV } = require('./config')
 
 const app = express()
 const morganOption = NODE_ENV === 'production' ? 'tiny' : 'dev'
-const ArticlesService = require('./articles-service')
+//const bodyParser = express.json()
+//const ArticlesService = require('./articles-service')
+const articlesRouter = require('./articles/articlesRouter')
 
 app.use(morgan(morganOption))
 app.use(helmet())
 app.use(cors())
-app.get('/', (req, res) => {
-  res.send('Hello boilerplate')
-})
-app.get('/articles', getArticles)
-app.get('/articles/:article_id', getArticle)
+app.use('/articles', articlesRouter)
+// app.get('/articles', getArticles)
+// app.get('/articles/:article_id', getArticle)
+// app.post('/articles', bodyParser, postArticle)
 app.use(errorHandler)
 
-function getArticle(req, res, next) {
-  const { article_id } = req.params
-  const knexI = req.app.get('db')
-  ArticlesService.getById(knexI, article_id)
-    .then(article => {
-      if(!article) {
-        return res.status(404).json({ error: { message: `Article doesn't exist` }})
-      }
-      res.json(article)
-    })
-    .catch(next)
-}
 
-function getArticles(req, res, next) {
-  const knexI = req.app.get('db')
-  ArticlesService.getAllArticles(knexI)
-    .then(articles => {
-      res.json(articles)
-    })
-    .catch(next)
-}
 
 function errorHandler(error, req, res, next) {
   let response

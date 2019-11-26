@@ -23,6 +23,24 @@ function makeArticlesArray() {
   ]
 }
 
+const makeArticle = {
+  good() {
+    return {
+      title: 'Test new article',
+      style: 'Listicle',
+      content: 'Test new article content...'
+    }
+  },
+
+  missingTitle() {
+    return {
+      style: 'Listicle',
+      content: 'Test new article content...'
+    }
+  }
+}
+
 module.exports = {
   makeArticlesArray,
+  makeArticle
 }
