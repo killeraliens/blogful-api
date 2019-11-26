@@ -24,6 +24,9 @@ function getArticle(req, res, next) {
   const knexI = req.app.get('db')
   ArticlesService.getById(knexI, article_id)
     .then(article => {
+      if(!article) {
+        return res.status(404).json({ error: { message: `Article doesn't exist` }})
+      }
       res.json(article)
     })
     .catch(next)

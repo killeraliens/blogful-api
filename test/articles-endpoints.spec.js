@@ -27,6 +27,7 @@ describe('Articles Endpoints', () => {
 
 
   describe('GET /articles', () => {
+
     context('given that there are blogful_articles', () => {
       const testArticles = makeArticlesArray()
 
@@ -43,9 +44,18 @@ describe('Articles Endpoints', () => {
         .expect(200, testArticles)
       })
     })
+
+    context('given that there are no articles in the blogful_articles table', () => {
+      it('returns 200 and an empty array', () => {
+        return supertest(app)
+          .get('/articles')
+          .expect(200, [])
+      })
+    })
   })
 
   describe('GET /articles/:article_id', () => {
+
     context('given that there are blogful_articles', () => {
       const testArticles = makeArticlesArray()
 
@@ -55,12 +65,21 @@ describe('Articles Endpoints', () => {
           .insert(testArticles)
       })
 
-      it(' returns 200 and correct article if exists', () => {
+      it('returns 200 and correct article if exists', () => {
         const articleId = 2
         const expectedArticle = testArticles[articleId - 1]
         return supertest(app)
           .get(`/articles/${articleId}`)
           .expect(200, expectedArticle)
+      })
+    })
+
+    context('given that there are no articles', () => {
+      it('returns 400 and error', () => {
+        const badId = 12345
+        return supertest(app)
+          .get(`/articles/${badId}`)
+          .expect(404, { error: { message: `Article doesn't exist`}})
       })
     })
   })
