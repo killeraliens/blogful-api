@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>xss attack example</title>
+</head>
+<body>
+  <div class="content"></div>
+  <button id="trigger" onclick="getBadArticle()"">get article 911</button>
+  <script>
+      function getBadArticle() {
+        fetch('http://localhost:8000/articles/911')
+          .then(res => res.json())
+          .then(body => {
+            document.querySelector('.content').innerHTML = body.content
+          })
+      }
+  </script>
+</body>
+</html>

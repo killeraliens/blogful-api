@@ -41,7 +41,7 @@ const makeArticle = {
 
   missingContent() {
     return {
-      style: 'listicle',
+      style: 'Listicle',
       title: 'some title'
     }
   },
@@ -50,6 +50,14 @@ const makeArticle = {
     return {
       title: 'some title',
       content: 'awesome content'
+    }
+  },
+
+  wrongStyle() {
+    return {
+      title: 'some title',
+      content: 'awesome content',
+      style: 'NotAStyle'
     }
   }
 }

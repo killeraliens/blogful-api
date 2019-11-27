@@ -34,7 +34,12 @@ const ArticlesService = {
     .where('id', id)
     .from('blogful_articles')
     .update(newData)
-  }
+  },
+
+  // getArticleCategories(knex) {
+  //   return knex
+  //    .select('enum_range')
+  // }
 }
 
 module.exports = ArticlesService;

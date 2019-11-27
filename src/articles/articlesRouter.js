@@ -2,6 +2,7 @@ const express = require('express')
 const ArticlesService = require('./articles-service')
 
 const articlesRouter = express.Router()
+const xss = require('xss')
 const bodyParser = express.json()
 
 articlesRouter
@@ -20,17 +21,19 @@ function postArticle(req, res, next) {
   const newArticle = { title, style, content }
   const knexI = req.app.get('db')
 
-  if (!title) {
-    return res.status(400).json({ error: { message: `Title required` } })
+  for(const [key, value] of Object.entries(newArticle)) {
+    if(value == null) {
+      return res.status(400).json({ error: { message: `${key} required` } })
+    }
   }
 
-  if (!style) {
-    return res.status(400).json({ error: { message: `Style required` } })
-  }
 
-  if (!content) {
-    return res.status(400).json({ error: { message: `Content required` } })
-  }
+  Object.keys(req.body).forEach(key => {
+    if (!["id", "title", "style", "content"].includes(key)) {
+      //logger.error(`Bad keys in ${JSON.stringify(req.body)}`)
+      return res.status(400).send('Invalid Data')
+    }
+  })
 
   ArticlesService.insertArticle(knexI, newArticle)
     .then(newArticle => {
@@ -50,7 +53,14 @@ function getArticle(req, res, next) {
       if (!article) {
         return res.status(404).json({ error: { message: `Article doesn't exist` } })
       }
-      res.json(article)
+
+      res.json({
+        id: article.id,
+        title: xss(article.title),
+        style: article.style,
+        content: xss(article.content),
+        date_published: article.date_published
+      })
     })
     .catch(next)
 }

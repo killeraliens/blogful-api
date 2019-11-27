@@ -14,9 +14,14 @@ app.use(morgan(morganOption))
 app.use(helmet())
 app.use(cors())
 app.use('/articles', articlesRouter)
+app.get('/xss', xssExample)
 app.use(errorHandler)
 
 
+function xssExample(req, res) {
+    res.cookie('secretToken', '1234567890');
+    res.sendFile(__dirname + '/xss-example.html');
+}
 
 function errorHandler(error, req, res, next) {
   let response
