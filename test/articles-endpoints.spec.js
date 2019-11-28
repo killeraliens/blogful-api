@@ -171,12 +171,6 @@ describe('Articles Endpoints', () => {
         content: `Bad image <img src="https://url.to.file.which/does-not.exist" onerror="alert(document.cookie);">. But not <strong>all</strong> bad.`
       }
 
-      beforeEach('insert attackArticle', () => {
-        return db
-          .into('blogful_articles')
-          .insert([attackArticle])
-      })
-
       it('responds with 201 and creates article with XSS removed', () => {
         return supertest(app)
           .post('/articles')
