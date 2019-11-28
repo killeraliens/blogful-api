@@ -54,7 +54,7 @@ describe('Articles Endpoints', () => {
     })
   })
 
-  describe.only('GET /articles/:article_id', () => {
+  describe('GET /articles/:article_id', () => {
 
     context('given that there are blogful_articles', () => {
       const testArticles = makeArticlesArray()
@@ -110,7 +110,7 @@ describe('Articles Endpoints', () => {
     })
   })
 
-  describe('POST /articles', () => {
+  describe.only('POST /articles', () => {
     context('given the post body is accurate', () => {
         it('creates new article and responds with 201 and new article', function() {
           this.retries(3)
@@ -137,39 +137,61 @@ describe('Articles Endpoints', () => {
                 .expect(postRes.body)
             )
         })
-      })
+    })
 
-      context('given the post body has errors', () => {
-        const reqFields = ['title', 'content', 'style']
-
-        reqFields.forEach(field => {
-          const newArticle = makeArticle.good()
-
-          it(`responds with 400 and error with missing ${field} field`, () => {
-            delete newArticle[field]
-
-            return supertest(app)
-              .post('/articles')
-              .send(newArticle)
-              .expect(400)
-              .expect(res => {
-                expect(res.body).to.eql({error: {message: `${field} required`}})
-              })
-          })
-        })
-
-
-        it.skip('responds with 400 and error if Style field is wrong type', () => {
-          const wrongStyleArticle = makeArticle.wrongStyle()
+    context('given the post body has errors', () => {
+      const reqFields = ['title', 'content', 'style']
+      reqFields.forEach(field => {
+        const newArticle = makeArticle.good()
+        it(`responds with 400 and error with missing ${field} field`, () => {
+          delete newArticle[field]
           return supertest(app)
             .post('/articles')
-            .send(wrongStyleArticle)
+            .send(newArticle)
             .expect(400)
+            .expect(res => {
+              expect(res.body).to.eql({error: {message: `${field} required`}})
+            })
         })
-
-
+      })
+      it.skip('responds with 400 and error if Style field is wrong type', () => {
+        const wrongStyleArticle = makeArticle.wrongStyle()
+        return supertest(app)
+          .post('/articles')
+          .send(wrongStyleArticle)
+          .expect(400)
       })
     })
+
+    context('given the post title and content fields contain XSS', () => {
+      const attackArticle = {
+        id: 666,
+        title: 'Naughty naughty very naughty <script>alert("xss");</script>',
+        style: 'How-to',
+        content: `Bad image <img src="https://url.to.file.which/does-not.exist" onerror="alert(document.cookie);">. But not <strong>all</strong> bad.`
+      }
+
+      beforeEach('insert attackArticle', () => {
+        return db
+          .into('blogful_articles')
+          .insert([attackArticle])
+      })
+
+      it('responds with 201 and creates article with XSS removed', () => {
+        return supertest(app)
+          .post('/articles')
+          .send(attackArticle)
+          .expect(201)
+          .expect(res => {
+            expect(res.body.title).to.eql('Naughty naughty very naughty &lt;script&gt;alert(\"xss\");&lt;/script&gt;')
+            expect(res.body.content).to.eql(`Bad image <img src="https://url.to.file.which/does-not.exist">. But not <strong>all</strong> bad.`)
+          })
+
+      })
+
+    })
+
+  })
 
 
 })

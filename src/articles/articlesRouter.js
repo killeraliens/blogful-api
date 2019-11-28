@@ -14,19 +14,17 @@ articlesRouter
   .route('/:article_id')
   .get(getArticle)
 
-
-
 function postArticle(req, res, next) {
   const { title, style, content } = req.body
   const newArticle = { title, style, content }
   const knexI = req.app.get('db')
+
 
   for(const [key, value] of Object.entries(newArticle)) {
     if(value == null) {
       return res.status(400).json({ error: { message: `${key} required` } })
     }
   }
-
 
   Object.keys(req.body).forEach(key => {
     if (!["id", "title", "style", "content"].includes(key)) {
@@ -35,8 +33,12 @@ function postArticle(req, res, next) {
     }
   })
 
+  newArticle.title = xss(newArticle.title)
+  newArticle.content = xss(newArticle.content)
+
   ArticlesService.insertArticle(knexI, newArticle)
     .then(newArticle => {
+
       res
         .status(201)
         .location(`/articles/${newArticle.id}`)
