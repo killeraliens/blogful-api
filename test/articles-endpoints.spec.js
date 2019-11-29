@@ -52,6 +52,27 @@ describe('Articles Endpoints', () => {
           .expect(200, [])
       })
     })
+
+    context('given an article contains XSS', () => {
+      const attackArticle = makeArticle.withXss()
+      const expectedArticle = makeArticle.cleanXss()
+
+      beforeEach('insert attackArticle', () => {
+        return db
+          .into('blogful_articles')
+          .insert([attackArticle])
+      })
+
+      it('responds with 200 and sanitized articles', () => {
+         return supertest(app)
+           .get('/articles')
+           .expect(200)
+           .expect(res => {
+              expect(res.body[0].title).to.eql(expectedArticle.title)
+              expect(res.body[0].content).to.eql(expectedArticle.content)
+           })
+      })
+    })
   })
 
   describe('GET /articles/:article_id', () => {
@@ -85,12 +106,8 @@ describe('Articles Endpoints', () => {
     })
 
     context('given that there is an xss attack article', () => {
-      const attackArticle = {
-        id: 666,
-        title: 'Naughty naughty very naughty <script>alert("xss");</script>',
-        style: 'How-to',
-        content: `Bad image <img src="https://url.to.file.which/does-not.exist" onerror="alert(document.cookie);">. But not <strong>all</strong> bad.`
-      }
+      const attackArticle = makeArticle.withXss()
+      const expectedArticle = makeArticle.cleanXss()
 
       beforeEach('insert attackArticle', () => {
         return db
@@ -103,14 +120,14 @@ describe('Articles Endpoints', () => {
            .get(`/articles/${attackArticle.id}`)
            .expect(200)
            .expect(res => {
-             expect(res.body.title).to.eql('Naughty naughty very naughty &lt;script&gt;alert(\"xss\");&lt;/script&gt;')
-             expect(res.body.content).to.eql(`Bad image <img src="https://url.to.file.which/does-not.exist">. But not <strong>all</strong> bad.`)
+             expect(res.body.title).to.eql(expectedArticle.title)
+             expect(res.body.content).to.eql(expectedArticle.content)
            })
       })
     })
   })
 
-  describe.only('POST /articles', () => {
+  describe('POST /articles', () => {
     context('given the post body is accurate', () => {
         it('creates new article and responds with 201 and new article', function() {
           this.retries(3)
@@ -154,6 +171,8 @@ describe('Articles Endpoints', () => {
             })
         })
       })
+
+      //need help to avoid 500 error, want it to return 404
       it.skip('responds with 400 and error if Style field is wrong type', () => {
         const wrongStyleArticle = makeArticle.wrongStyle()
         return supertest(app)
@@ -163,13 +182,9 @@ describe('Articles Endpoints', () => {
       })
     })
 
-    context('given the post title and content fields contain XSS', () => {
-      const attackArticle = {
-        id: 666,
-        title: 'Naughty naughty very naughty <script>alert("xss");</script>',
-        style: 'How-to',
-        content: `Bad image <img src="https://url.to.file.which/does-not.exist" onerror="alert(document.cookie);">. But not <strong>all</strong> bad.`
-      }
+    context('given the posts title and content fields contain XSS', () => {
+      const attackArticle = makeArticle.withXss()
+      const expectedArticle = makeArticle.cleanXss()
 
       it('responds with 201 and creates article with XSS removed', () => {
         return supertest(app)
@@ -177,12 +192,10 @@ describe('Articles Endpoints', () => {
           .send(attackArticle)
           .expect(201)
           .expect(res => {
-            expect(res.body.title).to.eql('Naughty naughty very naughty &lt;script&gt;alert(\"xss\");&lt;/script&gt;')
-            expect(res.body.content).to.eql(`Bad image <img src="https://url.to.file.which/does-not.exist">. But not <strong>all</strong> bad.`)
+            expect(res.body.title).to.eql(expectedArticle.title)
+            expect(res.body.content).to.eql(expectedArticle.content)
           })
-
       })
-
     })
 
   })

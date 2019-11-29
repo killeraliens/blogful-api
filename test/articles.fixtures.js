@@ -59,6 +59,24 @@ const makeArticle = {
       content: 'awesome content',
       style: 'NotAStyle'
     }
+  },
+
+  withXss() {
+    return {
+      id: 666,
+      title: 'Naughty naughty very naughty <script>alert("xss");</script>',
+      style: 'How-to',
+      content: `Bad image <img src="https://url.to.file.which/does-not.exist" onerror="alert(document.cookie);">. But not <strong>all</strong> bad.`
+    }
+  },
+
+  cleanXss() {
+    return {
+      id: 666,
+      title: 'Naughty naughty very naughty &lt;script&gt;alert(\"xss\");&lt;/script&gt;',
+      style: 'How-to',
+      content: `Bad image <img src="https://url.to.file.which/does-not.exist">. But not <strong>all</strong> bad.`
+    }
   }
 }
 
