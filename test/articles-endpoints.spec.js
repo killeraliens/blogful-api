@@ -200,5 +200,42 @@ describe('Articles Endpoints', () => {
 
   })
 
+  describe('DELETE /articles/:article_id', () => {
+    const testArticles = makeArticlesArray()
+    beforeEach('insert articles', () => {
+      return db
+        .insert(testArticles)
+        .into('blogful_articles')
+    })
+
+    context('given that the article exists', () => {
+      const deleted = testArticles[1]
+      const expectedArticles = testArticles.filter(article => article.id !== deleted.id)
+
+
+      it('responds with 204 and removes the article', () => {
+         return supertest(app)
+           .delete(`/articles/${deleted.id}`)
+           .expect(204)
+           .then(res => {
+             return supertest(app)
+               .get(`/articles`)
+               .then(res => {
+                 expect(res.body).to.eql(expectedArticles)
+               })
+           })
+      })
+    })
+
+    context('given that the article does not exist', () => {
+       const badId = 123456
+       it('responds with 404', () => {
+         return supertest(app)
+           .delete(`/articles/${badId}`)
+           .expect(404, {error: {message: `Article doesn't exist`}})
+       })
+    })
+  })
+
 
 })

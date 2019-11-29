@@ -21,7 +21,36 @@ articlesRouter
 
 articlesRouter
   .route('/:article_id')
+  .all(checkExists)
   .get(getArticle)
+  .delete(deleteArticle)
+
+function checkExists(req, res, next) {
+  const { article_id } = req.params
+  const knexI = req.app.get('db')
+  ArticlesService.getById(knexI, article_id)
+    .then(article => {
+      if (!article) {
+        return res.status(404).json({ error: { message: `Article doesn't exist` } })
+      }
+      res.article = article
+      next()
+    })
+    .catch(next)
+
+}
+
+function deleteArticle(req, res, next) {
+  const { article_id } = req.params
+  const knexI = req.app.get('db')
+
+  ArticlesService.deleteArticle(knexI, article_id)
+    .then(()=> {
+      res.status(204).end()
+    })
+    .catch(next)
+
+}
 
 function postArticle(req, res, next) {
   const { title, style, content } = req.body
@@ -57,17 +86,7 @@ function postArticle(req, res, next) {
 }
 
 function getArticle(req, res, next) {
-  const { article_id } = req.params
-  const knexI = req.app.get('db')
-  ArticlesService.getById(knexI, article_id)
-    .then(article => {
-      if (!article) {
-        return res.status(404).json({ error: { message: `Article doesn't exist` } })
-      }
-
-      res.json(sanitizeArticle(article))
-    })
-    .catch(next)
+  res.json(sanitizeArticle(res.article))
 }
 
 function getArticles(req, res, next) {
