@@ -26,7 +26,7 @@ describe('Articles Endpoints', () => {
   })
 
 
-  describe('GET /articles', () => {
+  describe('GET /api/articles', () => {
 
     context('given that there are blogful_articles', () => {
       const testArticles = makeArticlesArray()
@@ -39,7 +39,7 @@ describe('Articles Endpoints', () => {
 
       it('responds with 200 and all the articles', () => {
       return supertest(app)
-        .get('/articles')
+        .get('/api/articles')
         .expect('content-type', /json/)
         .expect(200, testArticles)
       })
@@ -48,7 +48,7 @@ describe('Articles Endpoints', () => {
     context('given that there are no articles in the blogful_articles table', () => {
       it('returns 200 and an empty array', () => {
         return supertest(app)
-          .get('/articles')
+          .get('/api/articles')
           .expect(200, [])
       })
     })
@@ -65,7 +65,7 @@ describe('Articles Endpoints', () => {
 
       it('responds with 200 and sanitized articles', () => {
          return supertest(app)
-           .get('/articles')
+           .get('/api/articles')
            .expect(200)
            .expect(res => {
               expect(res.body[0].title).to.eql(expectedArticle.title)
@@ -75,7 +75,7 @@ describe('Articles Endpoints', () => {
     })
   })
 
-  describe('GET /articles/:article_id', () => {
+  describe('GET /api/articles/:article_id', () => {
 
     context('given that there are blogful_articles', () => {
       const testArticles = makeArticlesArray()
@@ -90,7 +90,7 @@ describe('Articles Endpoints', () => {
         const articleId = 2
         const expectedArticle = testArticles[articleId - 1]
         return supertest(app)
-          .get(`/articles/${articleId}`)
+          .get(`/api/articles/${articleId}`)
           .expect(200, expectedArticle)
       })
 
@@ -100,7 +100,7 @@ describe('Articles Endpoints', () => {
       it('returns 404 and error', () => {
         const badId = 12345
         return supertest(app)
-          .get(`/articles/${badId}`)
+          .get(`/api/articles/${badId}`)
           .expect(404, { error: { message: `Article doesn't exist`}})
       })
     })
@@ -117,7 +117,7 @@ describe('Articles Endpoints', () => {
 
       it('responds with 200 and article with XSS removed', () => {
          return supertest(app)
-           .get(`/articles/${attackArticle.id}`)
+           .get(`/api/articles/${attackArticle.id}`)
            .expect(200)
            .expect(res => {
              expect(res.body.title).to.eql(expectedArticle.title)
@@ -127,14 +127,14 @@ describe('Articles Endpoints', () => {
     })
   })
 
-  describe('POST /articles', () => {
+  describe('POST /api/articles', () => {
     context('given the post body is accurate', () => {
         it('creates new article and responds with 201 and new article', function() {
           this.retries(3)
           const goodArticle = makeArticle.good()
 
           return supertest(app)
-            .post(`/articles`)
+            .post(`/api/articles`)
             .send(goodArticle)
             .expect(201)
             .expect(res => {
@@ -142,14 +142,14 @@ describe('Articles Endpoints', () => {
               expect(res.body.style).to.eql(goodArticle.style)
               expect(res.body.content).to.eql(goodArticle.content)
               expect(res.body).to.have.property('id')
-              expect(res.headers.location).to.eql(`/articles/${res.body.id}`)
+              expect(res.headers.location).to.eql(`/api/articles/${res.body.id}`)
               const expectedDate = new Date().toLocaleString()
               const actualDate = new Date(res.body.date_published).toLocaleString()
               expect(actualDate).to.eql(expectedDate)
             })
             .then(postRes =>
               supertest(app)
-                .get(`/articles/${postRes.body.id}`)
+                .get(`/api/articles/${postRes.body.id}`)
                 .expect(200)
                 .expect(postRes.body)
             )
@@ -163,7 +163,7 @@ describe('Articles Endpoints', () => {
         it(`responds with 400 and error with missing ${field} field`, () => {
           delete newArticle[field]
           return supertest(app)
-            .post('/articles')
+            .post('/api/articles')
             .send(newArticle)
             .expect(400)
             .expect(res => {
@@ -176,7 +176,7 @@ describe('Articles Endpoints', () => {
       it.skip('responds with 400 and error if Style field is wrong type', () => {
         const wrongStyleArticle = makeArticle.wrongStyle()
         return supertest(app)
-          .post('/articles')
+          .post('/api/articles')
           .send(wrongStyleArticle)
           .expect(400)
       })
@@ -188,7 +188,7 @@ describe('Articles Endpoints', () => {
 
       it('responds with 201 and creates article with XSS removed', () => {
         return supertest(app)
-          .post('/articles')
+          .post('/api/articles')
           .send(attackArticle)
           .expect(201)
           .expect(res => {
@@ -200,7 +200,7 @@ describe('Articles Endpoints', () => {
 
   })
 
-  describe('DELETE /articles/:article_id', () => {
+  describe('DELETE /api/articles/:article_id', () => {
     const testArticles = makeArticlesArray()
     beforeEach('insert articles', () => {
       return db
@@ -215,11 +215,11 @@ describe('Articles Endpoints', () => {
 
       it('responds with 204 and removes the article', () => {
          return supertest(app)
-           .delete(`/articles/${deleted.id}`)
+           .delete(`/api/articles/${deleted.id}`)
            .expect(204)
            .then(res => {
              return supertest(app)
-               .get(`/articles`)
+               .get(`/api/articles`)
                .then(res => {
                  expect(res.body).to.eql(expectedArticles)
                })
@@ -231,11 +231,90 @@ describe('Articles Endpoints', () => {
        const badId = 123456
        it('responds with 404', () => {
          return supertest(app)
-           .delete(`/articles/${badId}`)
+           .delete(`/api/articles/${badId}`)
            .expect(404, {error: {message: `Article doesn't exist`}})
        })
     })
   })
 
+  describe('PATCH /articles/:article_id', () => {
 
+    context('given article does not exist', () => {
+      const badId = 12345
+      it('returns 404', () => {
+        return supertest(app)
+          .patch(`/api/articles/${badId}`)
+          .expect(404, {error: {message: `Article doesn't exist`}})
+      })
+    })
+
+    context('given the article exists', () => {
+      const articlesArray = makeArticlesArray()
+
+      beforeEach('insert articles', () => {
+        return db
+        .insert(articlesArray)
+        .into('blogful_articles')
+      })
+
+      it('responds with 204', () => {
+        const idToPatch = articlesArray[0].id
+        const patchBody = {
+          title: 'A new title',
+          style: 'Interview',
+          content: 'New content updated..'
+        }
+        const articleBefore = articlesArray.find(article => article.id == idToPatch)
+        const expectedArticle = { ...articleBefore, ...patchBody }
+
+        return supertest(app)
+          .patch(`/api/articles/${idToPatch}`)
+          .send(patchBody)
+          .expect(204)
+          .then(() => {
+            return supertest(app)
+              .get(`/api/articles/${idToPatch}`)
+              .expect(200)
+              .expect( res => {
+                expect(res.body).to.eql(expectedArticle)
+              })
+          })
+      })
+
+      it('responds with 400 when no required fields supplied', () => {
+        const idToPatch = articlesArray[0].id
+        const badPatchBody = {
+          badField: 'do not accept'
+        }
+
+        return supertest(app)
+          .patch(`/api/articles/${idToPatch}`)
+          .send(badPatchBody)
+          .expect(400, {error: {message: `Body must contain at least one of title, content, style`}})
+      })
+
+      it('responds with 204 when updating required fields and ignoring unexpected fields', () => {
+        const idToPatch = articlesArray[1].id
+        const badPatchBody = {
+          title: `I'm supposed to be updated`,
+          badField: 'bad field to ignore'
+        }
+        const articleBefore = articlesArray.find(article => article.id == idToPatch)
+        const expectedArticle = {
+          ...articleBefore,
+          title: badPatchBody.title
+        }
+
+        return supertest(app)
+          .patch(`/api/articles/${idToPatch}`)
+          .send(badPatchBody)
+          .expect(204)
+          .then(() => {
+            return supertest(app)
+              .get(`/api/articles/${idToPatch}`)
+              .expect(expectedArticle)
+          })
+      })
+    })
+  })
 })

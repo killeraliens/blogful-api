@@ -36,6 +36,7 @@ const ArticlesService = {
     .update(newData)
   },
 
+
   // getArticleCategories(knex) {
   //   return knex
   //    .select('enum_range')

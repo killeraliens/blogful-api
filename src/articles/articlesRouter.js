@@ -1,4 +1,5 @@
 const express = require('express')
+const path = require('path')
 const ArticlesService = require('./articles-service')
 
 const articlesRouter = express.Router()
@@ -24,6 +25,7 @@ articlesRouter
   .all(checkExists)
   .get(getArticle)
   .delete(deleteArticle)
+  .patch(bodyParser, patchArticle)
 
 function checkExists(req, res, next) {
   const { article_id } = req.params
@@ -38,6 +40,32 @@ function checkExists(req, res, next) {
     })
     .catch(next)
 
+}
+
+function patchArticle(req, res, next) {
+  const { article_id } = req.params
+  const { title, content, style } = req.body
+  const db = req.app.get('db')
+  //res.status(204).end()
+  const patchBody = { title, content, style }
+
+  if (Object.values(patchBody).filter(field => field).length === 0) {
+    return res.status(400).json({ error: { message: `Body must contain at least one of title, content, style`}})
+  }
+
+  // Object.keys(req.body).forEach(key => {
+  //   if (!["title", "style", "content"].includes(key)) {
+  //     //logger.error(`Bad keys in ${JSON.stringify(req.body)}`)
+  //     return res.status(400).send('Invalid Data')
+  //   }
+  // })
+
+  ArticlesService
+    .updateArticle(db, article_id, patchBody)
+    .then(numRowsAffected => {
+      res.status(204).end()
+    })
+    .catch(next)
 }
 
 function deleteArticle(req, res, next) {
@@ -79,7 +107,7 @@ function postArticle(req, res, next) {
 
       res
         .status(201)
-        .location(`/articles/${newArticle.id}`)
+        .location(path.posix.join(req.originalUrl, `/${newArticle.id}`))
         .json(sanitizeArticle(newArticle))
     })
     .catch(next)
