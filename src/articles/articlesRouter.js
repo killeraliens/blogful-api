@@ -11,7 +11,8 @@ const sanitizeArticle = article => {
       title: xss(article.title),
       style: article.style,
       content: xss(article.content),
-      date_published: article.date_published
+      date_published: article.date_published,
+      author: article.author
   }
 }
 
@@ -73,7 +74,7 @@ function deleteArticle(req, res, next) {
 }
 
 function postArticle(req, res, next) {
-  const { title, style, content } = req.body
+  const { title, style, content, author } = req.body
   const newArticle = { title, style, content }
   const knexI = req.app.get('db')
 
@@ -83,8 +84,10 @@ function postArticle(req, res, next) {
     }
   }
 
+  newArticle.author = author
+
   Object.keys(req.body).forEach(key => {
-    if (!["id", "title", "style", "content"].includes(key)) {
+    if (!["id", "title", "style", "content", "author"].includes(key)) {
       //logger.error(`Bad keys in ${JSON.stringify(req.body)}`)
       return res.status(400).send('Invalid Data')
     }
