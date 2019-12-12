@@ -1,6 +1,7 @@
 const knex = require('knex')
 const app = require('../src/app')
 const { makeArticlesArray, makeArticle } = require('./articles.fixtures')
+const { makeUsersArray } = require('./users.fixtures')
 
 describe('Articles Endpoints', () => {
   let db
@@ -13,28 +14,35 @@ describe('Articles Endpoints', () => {
     app.set('db', db)
   })
 
-  before('clean blogful_articles table data', () => {
-    return db('blogful_articles').truncate()
+  before('clean all blogful_ table data', () => {
+    //return db('blogful_articles').truncate()
+    return db.raw('TRUNCATE blogful_articles, blogful_users, blogful_comments RESTART IDENTITY CASCADE')
   })
 
   afterEach('cleanup', () => {
-    return db('blogful_articles').truncate()
+    //return db('blogful_articles').truncate()
+    return db.raw('TRUNCATE blogful_articles, blogful_users, blogful_comments RESTART IDENTITY CASCADE')
   })
 
   after('disconnect from db, destroy knex instance', () => {
     return db.destroy()
   })
 
-
   describe('GET /api/articles', () => {
 
     context('given that there are blogful_articles', () => {
+      const testUsers = makeUsersArray()
       const testArticles = makeArticlesArray()
 
       beforeEach('insert articles into blogful_articles table', () => {
         return db
-          .into('blogful_articles')
-          .insert(testArticles)
+          .into('blogful_users')
+          .insert(testUsers)
+          .then(() => {
+            return db
+              .into('blogful_articles')
+              .insert(testArticles)
+          })
       })
 
       it('responds with 200 and all the articles', () => {
@@ -56,11 +64,17 @@ describe('Articles Endpoints', () => {
     context('given an article contains XSS', () => {
       const attackArticle = makeArticle.withXss()
       const expectedArticle = makeArticle.cleanXss()
+      const testUsersArray = makeUsersArray()
 
       beforeEach('insert attackArticle', () => {
         return db
-          .into('blogful_articles')
-          .insert([attackArticle])
+          .into('blogful_users')
+          .insert(testUsersArray)
+          .then(() => {
+            return db
+              .into('blogful_articles')
+              .insert([attackArticle])
+          })
       })
 
       it('responds with 200 and sanitized articles', () => {
@@ -78,12 +92,18 @@ describe('Articles Endpoints', () => {
   describe('GET /api/articles/:article_id', () => {
 
     context('given that there are blogful_articles', () => {
+      const testUsers = makeUsersArray()
       const testArticles = makeArticlesArray()
 
       beforeEach('insert articles into blogful_articles table', () => {
         return db
-          .into('blogful_articles')
-          .insert(testArticles)
+          .into('blogful_users')
+          .insert(testUsers)
+          .then(() => {
+            return db
+              .into('blogful_articles')
+              .insert(testArticles)
+          })
       })
 
       it('returns 200 and correct article if exists', () => {
@@ -108,11 +128,17 @@ describe('Articles Endpoints', () => {
     context('given that there is an xss attack article', () => {
       const attackArticle = makeArticle.withXss()
       const expectedArticle = makeArticle.cleanXss()
+      const testUsersArray = makeUsersArray()
 
       beforeEach('insert attackArticle', () => {
         return db
-          .into('blogful_articles')
-          .insert([attackArticle])
+          .into('blogful_users')
+          .insert(testUsersArray)
+          .then(()=> {
+            return db
+              .into('blogful_articles')
+              .insert([attackArticle])
+          })
       })
 
       it('responds with 200 and article with XSS removed', () => {
@@ -185,6 +211,13 @@ describe('Articles Endpoints', () => {
     context('given the posts title and content fields contain XSS', () => {
       const attackArticle = makeArticle.withXss()
       const expectedArticle = makeArticle.cleanXss()
+      const testUsers = makeUsersArray()
+
+      beforeEach('insert articles into blogful_articles table', () => {
+        return db
+          .into('blogful_users')
+          .insert(testUsers)
+      })
 
       it('responds with 201 and creates article with XSS removed', () => {
         return supertest(app)
@@ -201,17 +234,23 @@ describe('Articles Endpoints', () => {
   })
 
   describe('DELETE /api/articles/:article_id', () => {
+    const testUsers = makeUsersArray()
     const testArticles = makeArticlesArray()
     beforeEach('insert articles', () => {
       return db
-        .insert(testArticles)
-        .into('blogful_articles')
+        .into('blogful_users')
+        .insert(testUsers)
+        .then(() => {
+          return db
+            .into('blogful_articles')
+            .insert(testArticles)
+        })
+
     })
 
     context('given that the article exists', () => {
       const deleted = testArticles[1]
       const expectedArticles = testArticles.filter(article => article.id !== deleted.id)
-
 
       it('responds with 204 and removes the article', () => {
          return supertest(app)
@@ -249,12 +288,18 @@ describe('Articles Endpoints', () => {
     })
 
     context('given the article exists', () => {
+      const testUsersArray = makeUsersArray()
       const articlesArray = makeArticlesArray()
 
       beforeEach('insert articles', () => {
         return db
-        .insert(articlesArray)
-        .into('blogful_articles')
+          .insert(testUsersArray)
+          .into('blogful_users')
+          .then(() => {
+            return db
+              .insert(articlesArray)
+              .into('blogful_articles')
+          })
       })
 
       it('responds with 204', () => {
