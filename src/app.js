@@ -9,11 +9,14 @@ const app = express()
 const morganOption = NODE_ENV === 'production' ? 'tiny' : 'dev'
 
 const articlesRouter = require('./articles/articlesRouter')
+const usersRouter = require('./users/usersRouter')
+
 
 app.use(morgan(morganOption))
 app.use(helmet())
 app.use(cors())
 app.use('/api/articles', articlesRouter)
+app.use('/api/users', usersRouter)
 app.get('/xss', xssExample)
 app.use(errorHandler)
 

@@ -46,19 +46,11 @@ function patchArticle(req, res, next) {
   const { article_id } = req.params
   const { title, content, style } = req.body
   const db = req.app.get('db')
-  //res.status(204).end()
   const patchBody = { title, content, style }
 
   if (Object.values(patchBody).filter(field => field).length === 0) {
     return res.status(400).json({ error: { message: `Body must contain at least one of title, content, style`}})
   }
-
-  // Object.keys(req.body).forEach(key => {
-  //   if (!["title", "style", "content"].includes(key)) {
-  //     //logger.error(`Bad keys in ${JSON.stringify(req.body)}`)
-  //     return res.status(400).send('Invalid Data')
-  //   }
-  // })
 
   ArticlesService
     .updateArticle(db, article_id, patchBody)
